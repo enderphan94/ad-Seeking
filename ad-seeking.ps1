@@ -161,6 +161,7 @@ $NeverExpires = 9223372036854775807
 # Supplied Attributes
 $global:exportedToCSV  = $false
 $global:exportedToTxt = $false
+$global:servicAcc = $false
 $global:ea = 0
 $global:last2015 = 0
 $global:last2016 = 0
@@ -795,17 +796,16 @@ function Generate-Html {
 # Service accounts
 
 function seracc{
+    $global:servicAcc = $True
     ini
     if(($global:sam -match "^[pP]98[5..7]") -and ($global:sam -notmatch "^[pP]981")){ 
-        tracking -fileName $outFileService      
+        tracking -fileName $outFileService 
+             
     }
-    html
-    Generate-Html -filehtml $outFileHTMLService -IncludeImages $global:IncludeImages
-    foreach($image in $global:IncludeImages){
+ 
 
-        rm $image 
-    }
 }
+    
 # Admin accounts
 
 function adminacc{
@@ -912,6 +912,7 @@ function main{
         {    
             #tracking
             seracc
+        
             $TotalUsersProcessed++
             If ($ProgressBar) 
             {
@@ -1011,3 +1012,17 @@ if($exportedToTxt -eq $true){
 #Finish
 Write-Host
 Write-Verbose -Message  "Script Finished!!" -Verbose
+
+function writeHTML{
+
+    param($filename)
+    html
+    Generate-Html -filehtml $filename -IncludeImages $global:IncludeImages
+    foreach($image in $global:IncludeImages){
+            rm $image 
+    }
+}
+
+if($global:servicAcc -eq $true){
+    writeHTML -filename $outFileHTMLService
+}
