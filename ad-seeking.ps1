@@ -152,6 +152,7 @@ $outFileAdmin = $($PSScriptRoot)+"\$($Domain)-Report Admin Accounts-$($dateTimeF
 $outFileUser= $($PSScriptRoot)+"\$($Domain)-Report User Accounts-$($dateTimeFile).csv"
 $outFileTxt = $($PSScriptRoot)+"\Report-$($dateTimeFile).txt"
 $outFileHTMLService = $($PSScriptRoot)+"\$($Domain)-Report Service Accounts-$($dateTimeFile).html"
+$outFileHTMLAdmin = $($PSScriptRoot)+"\$($Domain)-Report Admin Accounts-$($dateTimeFile).html"
 $outFileMeg = $($PSScriptRoot)+"\$($Domain)-FinalReport-$($dateTimeFile).csv"
 $outFileModi = $($PSScriptRoot)+"\$($Domain)-ReportModi-$($dateTimeFile).csv"
 
@@ -162,58 +163,62 @@ $NeverExpires = 9223372036854775807
 $global:exportedToCSV  = $false
 $global:exportedToTxt = $false
 $global:servicAcc = $false
-$global:ea = 0
-$global:last2015 = 0
-$global:last2016 = 0
-$global:last2017 = 0
-$global:otherLast = 0
-$global:NeverLogon = 0
-$global:noLastSet = 0
-$global:passSet2015 = 0
-$global:passSet2016 = 0
-$global:passSet2017 = 0
-$global:otherPassSet = 0
-$global:noBadSet= 0
-$global:basPassC0= 0
-$global:basPassC1= 0
-$global:basPassC2= 0
-$global:basPassC3= 0
-$global:noBadLogSet = 0
-$global:uknownBadLog = 0
-$global:badlog2015 =0
-$global:badlog2016 =0
-$global:badlog2017 =0
-$global:otherBadlog =0
-$global:accNotEx = 0
-$global:accEx = 0
-$global:accDisStatus=0
-$global:smartRe =0
-$global:passNotRe= 0
-$global:passChangeNotAll = 0
-$global:passNExpSet = 0
-$global:ageNA = 0
-$global:ageDate2017=0
-$global:ageDate2016=0
-$global:ageDate2015=0
-$global:otherAgeDAte=0
-$global:modi2015 =0
-$global:modi2016=0
-$global:modi2017=0
-$global:otherModi=0
-$global:noneModi=0
+$global:adminAcc = $false
+function zero{
+    $global:ea = 0
+    $global:last2015 = 0
+    $global:last2016 = 0
+    $global:last2017 = 0
+    $global:otherLast = 0
+    $global:NeverLogon = 0
+    $global:noLastSet = 0
+    $global:passSet2015 = 0
+    $global:passSet2016 = 0
+    $global:passSet2017 = 0
+    $global:otherPassSet = 0
+    $global:noBadSet= 0
+    $global:basPassC0= 0
+    $global:basPassC1= 0
+    $global:basPassC2= 0
+    $global:basPassC3= 0
+    $global:noBadLogSet = 0
+    $global:uknownBadLog = 0
+    $global:badlog2015 =0
+    $global:badlog2016 =0
+    $global:badlog2017 =0
+    $global:otherBadlog =0
+    $global:accNotEx = 0
+    $global:accEx = 0
+    $global:accDisStatus=0
+    $global:smartRe =0
+    $global:passNotRe= 0
+    $global:passChangeNotAll = 0
+    $global:passNExpSet = 0
+    $global:ageNA = 0
+    $global:ageDate2017=0
+    $global:ageDate2016=0
+    $global:ageDate2015=0
+    $global:otherAgeDAte=0
+    $global:modi2015 =0
+    $global:modi2016=0
+    $global:modi2017=0
+    $global:otherModi=0
+    $global:noneModi=0
+}
 function ini{
-    $global:dn =  $user.Properties.Item("distinguishedName")[0]    
-    $global:sam = $user.Properties.Item("sAMAccountName")[0]
-    $global:logon = $user.Properties.Item("lastLogonTimeStamp")[0]
-    $global:mail =$user.Properties.Item("mail")[0]
-    $global:passwordLS = $user.Properties.Item("pwdLastSet")[0]
-    $global:passwordC = $user.Properties.Item("badpwdcount")[0]
-    $global:accountEx = $user.Properties.Item("accountExpires")[0]
-    $global:accountDis= $user.Properties.Item("userAccountControl")[0] 
-    $global:modify= $user.Properties.Item("modifyTimeStamp")[0]
-    $global:lockoutTime= $user.Properties.Item("lockoutTime")[0]
-	$global:lastFailedAt = $user.Properties.item("badPasswordTime")[0]
-    $global:Description = $user.Properties.item("Description")[0] 
+
+    $global:dn =  $global:user.Properties.Item("distinguishedName")[0]    
+    $global:sam = $global:user.Properties.Item("sAMAccountName")[0]
+    $global:logon = $global:user.Properties.Item("lastLogonTimeStamp")[0]
+    $global:mail =$global:user.Properties.Item("mail")[0]
+    $global:passwordLS = $global:user.Properties.Item("pwdLastSet")[0]
+    $global:passwordC = $global:user.Properties.Item("badpwdcount")[0]
+    $global:accountEx = $global:user.Properties.Item("accountExpires")[0]
+    $global:accountDis= $global:user.Properties.Item("userAccountControl")[0] 
+    $global:modify= $global:user.Properties.Item("modifyTimeStamp")[0]
+    $global:lockoutTime= $global:user.Properties.Item("lockoutTime")[0]
+	$global:lastFailedAt = $global:user.Properties.item("badPasswordTime")[0]
+    $global:Description = $global:user.Properties.item("Description")[0] 
     $global:passSet = $false
     $global:passTrue =$false
 }
@@ -810,88 +815,56 @@ function seracc{
 
 function adminacc{
 
+    $global:adminAcc = $True
+    $DC = $(Get-ADDomain $Domain.Name).distinguishedName    
+    $Base = "LDAP://$D/OU=Admin Accounts,OU=Admin Roles,$DC"
+
+    $AdminSearch = New-Object System.DirectoryServices.DirectorySearcher
+    $AdminSearch.SearchRoot =$Base
+    $AdminSearch.SearchScope = "subtree"
+    $AdminSearch.PageSize = 100
+    $AdminSearch.Filter = "(&(objectCategory=$objectCategory)(objectClass=$objectClass))"
+
+    $properies =@("distinguishedName",
+    "sAMAccountName",
+    "mail",
+    "lastLogonTimeStamp",
+    "pwdLastSet",
+    "badpwdcount",
+    "accountExpires",
+    "userAccountControl",
+    "modifyTimeStamp",
+    "lockoutTime"
+    "badPasswordTime",
+    "maxPwdAge ",
+    "Description"
+    )
+    foreach($pro in $properies)
+    {
+        $AdminSearch.PropertiesToLoad.add($pro)| out-null
+    }
+    $users = $AdminSearch.FindAll()
+    zero
+    foreach($global:user in $users){
+        ini
+        tracking -fileName $outFileAdmin 
+
+    }
 
 }
 
 #Main run here
-$cls = cls
+#$cls = cls
 function main{
-    $ADSearch.SearchRoot ="LDAP://$Domain"
-    # distinguished Name method
-    $arrayDN = @()
-    if($dna -eq $true)
-    {
-        if($amountCheck -eq $true)
-        {
-            Write-Host
-            Write-Verbose -Message  "Please be patient whilst the script retrieves all $global:amount distinguished names..." -Verbose        
-        
-            foreach ($user  in $userObjects)
-            {
-                if($count -lt $global:amount)
-                {
-                    $sam = $user.Properties.Item("sAMAccountName")[0]
-                    $dn =  $user.Properties.Item("distinguishedName")[0]
-                               
-                    if($exportCheck -eq $true){
-                        $global:exportedToTxt = $true
-                        $dn | Out-File "$outFileTxt" -Append
-                    }
-                    elseif($exportCheck -eq $false){
-                        $dn
-                        #$arrayDN += $dn
-                    }                 
-                    $count++    
-                    $TotalUsersProcessed++   
-                
-                }
-                If ($ProgressBar) 
-                {
-                    Write-Progress -Activity "Processing $($global:amount) Users" -Status ("Count: 
-                    $($TotalUsersProcessed)- Username: {0}" -f $sam) -PercentComplete (($TotalUsersProcessed/$global:amount)*100)
-                }
-            }
-            #$arrayDN
-        }    
-        elseif($amountCheck -eq $false)
-        {
-            Write-Host
-            Write-Verbose -Message  "Please be patient whilst the script retrieves all $userCount distinguished names..." -Verbose
-            foreach ($user  in $userObjects)
-            {
-                $sam = $user.Properties.Item("sAMAccountName")[0]
-                $dn =  $user.Properties.Item("distinguishedName")[0]
-                if($exportCheck -eq $true)
-                {
-                        $global:exportedToTxt = $true
-                        $dn | Out-File "$outFileTxt" -Append
-                }
-                elseif($exportCheck -eq $false)
-                {
-                        $dn
-                        #$arrayDN += $dn
-                } 
-                $TotalUsersProcessed++
-                If ($ProgressBar) 
-                {
-                    Write-Progress -Activity "Processing $($userCount) Users" -Status ("Count: 
-                    $($TotalUsersProcessed)- Username: {0}" -f $sam) -PercentComplete (($TotalUsersProcessed/$userCount)*100)
-                }
-            }        
-            #$arrayDN
-        }
-    }
+   
     ## Finished distinguished Name method
-
-    elseif($amountCheck -eq $true)
-    {
+        zero
         Write-Host
         Write-Verbose -Message  "Please be patient whilst the script retrieves all $global:amount distinguished names..." -Verbose
-        foreach ($user  in $userObjects)
+        foreach ($global:user  in $userObjects)
         {
             if($count -lt $global:amount)
             {
-                #tracking
                 seracc
                 $TotalUsersProcessed++
                 $count++
@@ -903,55 +876,25 @@ function main{
             
             }
         }
-    }
-    elseif($amountCheck -eq $false)
-    {
-        Write-Host
-        Write-Verbose -Message  "Please be patient whilst the script retrieves all $userCount distinguished names..." -Verbose
-        foreach ($user  in $userObjects)
-        {    
-            #tracking
-            seracc
         
-            $TotalUsersProcessed++
-            If ($ProgressBar) 
-            {
-               
-                Write-Progress -Activity "Processing $($userCount) Users" -Status ("Count: 
-                $($TotalUsersProcessed)- Username: {0}" -f $sam) -PercentComplete (($TotalUsersProcessed/$userCount)*100)
-            }
-        }
+    
+
+}
+function writeHTML{
+
+    param($filename)
+    html
+    Generate-Html -filehtml $filename -IncludeImages $global:IncludeImages
+    foreach($image in $global:IncludeImages){
+            rm $image 
     }
 }
+
+
+
 #optional choices
 function optional{
-    write-host
-    write-host " 1. Get distinguished name "
-    write-host " 2. Get all supplied attributes"
-    write-host
-    $methods = Read-Host -Prompt "Option "
-    if($methods -eq 1)
-    {
-        $dna = $true
-    }
-    elseif ($methods -eq 2)
-    {
-        $dna = $false
-    }else
-    {
-        Write-Verbose -Message  "Option is not valid" -Verbose
-        exit
-    }
-
-    #Amount
-    $global:amount = Read-Host -Prompt "Amount of data (Enter to get all data)"
-    if($global:amount -eq ""){        
-        $amountCheck = $false
-    }
-    else
-    {        
-        $amountCheck = $true
-    }    
+   
     #Export
     $export = Read-Host -Prompt "Do you want to export the data? (y/n)"
     if(($export -eq "y") -or ($export -eq ""))
@@ -968,9 +911,18 @@ function optional{
         exit
     }
     main
+    if($global:servicAcc -eq $true){
+        writeHTML -filename $outFileHTMLService
+    }
+    adminacc
+    if($global:adminAcc -eq $True){
+
+        writeHTML -filename $outFileHTMLAdmin
+    }
     
     
 }
+
 #Options
 if($type -eq 1)
 {  
@@ -989,19 +941,8 @@ else{
 
 if($exportedToCSV -eq $true){
         Write-Host
-      <#
-        modiOne
-        
-        $CSV1 = Import-Csv $outFileModi
-        $CSV2 = Import-Csv $outFileService
-
-        $CSV2 | ForEach-Object -Begin {$i = 0} {  
-        $_ | Add-Member -MemberType NoteProperty -Name "User's Objects lastest Modification" -Value $CSV1[$i++].modi -PassThru 
-                    } | Export-Csv $outFileMeg -NoTypeInformation
-        rm $outFileModi
-         $outFileService
-         #>
         Write-Host "Data has been exported to $outFileService" -foregroundcolor "magenta"
+        Write-Host "Data has been exported to $outFileAdmin" -foregroundcolor "magenta"
         
 }
 if($exportedToTxt -eq $true){
@@ -1013,16 +954,6 @@ if($exportedToTxt -eq $true){
 Write-Host
 Write-Verbose -Message  "Script Finished!!" -Verbose
 
-function writeHTML{
 
-    param($filename)
-    html
-    Generate-Html -filehtml $filename -IncludeImages $global:IncludeImages
-    foreach($image in $global:IncludeImages){
-            rm $image 
-    }
-}
 
-if($global:servicAcc -eq $true){
-    writeHTML -filename $outFileHTMLService
-}
+
