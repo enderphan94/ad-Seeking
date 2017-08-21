@@ -139,7 +139,7 @@ $userObjects = $ADSearch.FindAll()
 $dnarr = New-Object System.Collections.ArrayList
 $modiValues = New-object System.Collections.ArrayList
 $Delimiter = ","
-$userCount =  $userObjects.Count
+#$userCount =  $userObjects.Count #good method but don't use in large scale
 $result = @()
 $count = 0
 # Creating csv file
@@ -152,6 +152,7 @@ $outFileUser= $($PSScriptRoot)+"\$($Domain)-Report User Accounts-$($dateTimeFile
 $outFileTxt = $($PSScriptRoot)+"\Report-$($dateTimeFile).txt"
 $outFileHTMLService = $($PSScriptRoot)+"\$($Domain)-Report Service Accounts-$($dateTimeFile).html"
 $outFileHTMLAdmin = $($PSScriptRoot)+"\$($Domain)-Report Admin Accounts-$($dateTimeFile).html"
+$outFileHTMLUser = $($PSScriptRoot)+"\$($Domain)-Report User Accounts-$($dateTimeFile).html"
 $outFileMeg = $($PSScriptRoot)+"\$($Domain)-FinalReport-$($dateTimeFile).csv"
 $outFileModi = $($PSScriptRoot)+"\$($Domain)-ReportModi-$($dateTimeFile).csv"
 
@@ -241,7 +242,8 @@ Function tracking
             }
             $lastLogon.Year#>
             $global:serviceCount++
-            $global:adminCount++        
+            $global:adminCount++
+            $global:countuser++        
             $global:lastLogon= $global:lastLogon.ToString("yyyy/MM/dd")           
             if($global:lastLogon.split("/")[0] -eq 2015){
                 $global:last2015++
@@ -481,7 +483,9 @@ Function tracking
 #outFile --> HTML
 
 function html{
-    param($totalCount)
+
+    param($totalCount,$title)
+        
     $global:IncludeImages = New-Object System.Collections.ArrayList
     $global:check= 0
     $global:outFilePicPie = $($PSScriptRoot)+"\Pie-$($dateTimeFile)-$($global:check).jpeg"
@@ -692,8 +696,8 @@ function html{
     $ipAddress = Get-NetIPAddress | ?{($_.InterfaceAlias -match "Public") -and ($_.AddressFamily -match "Ipv4")}|select IPAddress|Out-String
     $ipAddress = $ipAddress -replace '-', ' ' -replace 'IPAddress', ''
     $ipAddress = $ipAddress.Trim()
-    $body =@'
-    <h1> Forest Report </h1>
+    $global:body =@'
+    <h1> Forest Report - {15} </h1>
     <p><ins><b>I.<b> Information<ins></p>
     <div class="tabofexecu">
         <table class="tabexecu" >
@@ -779,7 +783,8 @@ function html{
     <div>
 
     <p><ins><b>III.<b> Data Illustration<ins></p>
-'@ -f  $Domain ,$env:UserDomain, $env:ComputerName,$userName,$(get-date),$outFileMeg,$adForest,$trustedDo,$objectCategory,$objectClass,$totalCount,$admin,$domainCName,$domainCoper,$ipAddress
+'@ -f  $Domain ,$env:UserDomain, $env:ComputerName,$userName,$(get-date),$outFileMeg,$adForest,$totalCount,$objectCategory,$objectClass,$totalCount,$admin,$domainCName,$domainCoper,$ipAddress,$title
+
 }
 
 #Generate HTML
@@ -795,14 +800,10 @@ function Generate-Html {
         $ImageBits = [Convert]::ToBase64String((Get-Content $_ -Encoding Byte))
         "<center><img src=data:image/jpeg;base64,$($ImageBits) alt='My Image'/><center>"
     }
-        ConvertTo-Html -Body $body -PreContent $imageHTML -Title "Report on $Domain" -CssUri "style.css" |
+        ConvertTo-Html -Body $global:body  -PreContent $imageHTML -Title "Report on $Domain" -CssUri "style.css" |
         Out-File $filehtml
     }
 }
-
-# Service accounts
-
-
 
 # Admin accounts
 function adminacc{
@@ -836,6 +837,7 @@ function adminacc{
         $AdminSearch.PropertiesToLoad.add($pro)| out-null
     }
     $users = $AdminSearch.FindAll()
+    Write-Verbose -Message  "Please be patient whilst the script retrieves all admin accounts..." -Verbose
     zero
     foreach($global:user in $users){
         ini
@@ -845,40 +847,71 @@ function adminacc{
     
 }
 
-#Main run here
+# User accounts
+function useracc{
+
+    $global:countuser=0
+    $global:userAcc = $True
+    $DC = $(Get-ADDomain $Domain.Name).distinguishedName    
+    $Base = "LDAP://$D/CN=Users,$DC"
+
+    $AdminSearch = New-Object System.DirectoryServices.DirectorySearcher
+    $AdminSearch.SearchRoot =$Base
+    $AdminSearch.SearchScope = "subtree"
+    $AdminSearch.PageSize = 100
+    $AdminSearch.Filter = "(&(objectCategory=$objectCategory)(objectClass=$objectClass))"
+
+    $properies =@("distinguishedName",
+                    "sAMAccountName",
+                    "mail",
+                    "lastLogonTimeStamp",
+                    "pwdLastSet",
+                    "badpwdcount",
+                    "accountExpires",
+                    "userAccountControl",
+                    "modifyTimeStamp",
+                    "lockoutTime"
+                    "badPasswordTime",
+                    "maxPwdAge ",
+                    "Description")
+                 
+    foreach($pro in $properies)
+    {
+        $AdminSearch.PropertiesToLoad.add($pro)| out-null
+    }
+    $users = $AdminSearch.FindAll()
+    Write-Verbose -Message  "Please be patient whilst the script retrieves all user accounts..." -Verbose
+    zero
+    foreach($global:user in $users){
+        ini
+        if($global:sam -notmatch "^[pP]98[5..7]"){
+            tracking -fileName $outFileUser 
+        }
+    }
+    
+}
+# Service Accounts
 #$cls = cls
 function seracc{
         $global:serviceCount =0
     ## Finished distinguished Name method
         zero
         Write-Host
-        Write-Verbose -Message  "Please be patient whilst the script retrieves all $global:amount distinguished names..." -Verbose
+        Write-Verbose -Message  "Please be patient whilst the script retrieves all service accounts..." -Verbose
         foreach ($global:user  in $userObjects)
-        {
-            if($count -lt $global:amount)
-            {
-                $global:servicAcc = $True
-                ini
-                if(($global:sam -match "^[pP]98[5..7]") -and ($global:sam -notmatch "^[pP]981")){         
-                    tracking -fileName $outFileService 
+        {         
+            $global:servicAcc = $True
+            ini
+            if(($global:sam -match "^[pP]98[5..7]") -and ($global:sam -notmatch "^[pP]981")){         
+                tracking -fileName $outFileService 
         
-                }
-                $TotalUsersProcessed++
-                $count++
-                If ($ProgressBar) 
-                {                
-                    Write-Progress -Activity "Processing $($global:amount) Users" -Status ("Count: 
-                    $($TotalUsersProcessed)- Username: {0}" -f $sam) -PercentComplete (($TotalUsersProcessed/$global:amount)*100)              
-                }
-            
-            }
-        }
-        
+            }  
+        }      
 }
 function writeHTML{
 
-    param($filename,$countHere)
-    html -totalCount $countHere
+    param($filename,$countHere,$title)
+    html -totalCount $countHere -title $title
     Generate-Html -filehtml $filename -IncludeImages $global:IncludeImages
     foreach($image in $global:IncludeImages){      
          rm $image 
@@ -904,18 +937,24 @@ function optional{
         Write-Verbose -Message  "Option is not valid" -Verbose
         exit
     }
+    $global:amount = $userCount
     seracc
     $global:serviceCount
     if($global:servicAcc -eq $true){
-        writeHTML -filename $outFileHTMLService -countHere $global:serviceCount
+        writeHTML -filename $outFileHTMLService -countHere $global:serviceCount -title "Service Accounts" 
     }
     adminacc
     $global:adminCount
     if($global:adminAcc -eq $True){
 
-        writeHTML -filename $outFileHTMLAdmin -countHere $global:adminCount
+        writeHTML -filename $outFileHTMLAdmin -countHere $global:adminCount -title "Admin Accounts"
     }
-    
+    useracc
+    $global:countuser
+    if($global:userAcc -eq $True){
+
+        writeHTML -filename $outFileHTMLUser -countHere $global:countuser -title "User Accounts"
+    }
     
     
 }
@@ -935,18 +974,15 @@ else{
     exit
 }
 
-
 if($exportedToCSV -eq $true){
         Write-Host
         Write-Host "Data has been exported to $outFileService" -foregroundcolor "magenta"
+        Write-Host
         Write-Host "Data has been exported to $outFileAdmin" -foregroundcolor "magenta"
+        Write-Host
+        Write-Host "Data has been exported to $outFileUser" -foregroundcolor "magenta"
         
 }
-if($exportedToTxt -eq $true){
-        Write-Host
-        Write-Host "Data has been exported to $outFileTxt" -foregroundcolor "magenta"
-}
-
 #Finish
 Write-Host
 Write-Verbose -Message  "Script Finished!!" -Verbose
