@@ -3,31 +3,30 @@
 
 Import-Module ActiveDirectory
 #>
-<#Usage 1.0
- - Suppy the objectClass (Eg: user, group, person...)
+<#
+.Synopsis
+    
+.DESCRIPTION
+    Get Service, Admin, User accounts with the following attributes:
 
- - Just Enumerate Distinguished name
-
- .\adTracking.ps1 -dna           # Enumerate Distinguished name and print it to console
- .\adTracking.ps1 -dna -addToReport   # Write Distinguished name to text file
- .\adTracking.ps1 -dna -addToReport -amount 100   # Write Distinguished name to text file with specific amout of data
- .\adTracking.ps1 -dna -amount 100       # Print given amount of Distinguished name to console
-
- - Get All attributes
-
- .\adTracking.ps1               # Enumerate  all supplied LDAP Attributes and print it to console
- .\adTracking.ps1 -addToReport  # Write all data to CSV file
- .\adTracking.ps1 -addToReport -amount 100 # Write data to CSV file with given amount of data
- .\adTracking.ps1 -amount 100       # Print given amount of data to console   
-#>    
-
-<# Update 1.1
-- Added the trusted domain method
-- Fixed Account expires function
-- Fixed PasswordLS
-- change parameters to optional methods
-
-Usage 1.1: Just flow the options given by the tool
+    "distinguishedName",
+    "sAMAccountName",
+    "mail",
+    "lastLogonTimeStamp",
+    "pwdLastSet",
+    "badpwdcount",
+    "accountExpires",
+    "userAccountControl",
+    "modifyTimeStamp",
+    "lockoutTime"
+    "badPasswordTime",
+    "maxPwdAge ",
+    "Description"
+.NOTES
+    Dev by Ender Phan
+.LINK
+    https://github.com/enderphan94/ad-Seeking/blob/master/ad-seeking.ps1
+    
 #>
 
 $activeMo = Import-Module ActiveDirectory -ErrorAction Stop
@@ -855,7 +854,7 @@ function adminacc{
 
 #Main run here
 #$cls = cls
-function main{
+function main_seracc{
    
     ## Finished distinguished Name method
         zero
@@ -910,7 +909,7 @@ function optional{
         Write-Verbose -Message  "Option is not valid" -Verbose
         exit
     }
-    main
+    main_seracc
     if($global:servicAcc -eq $true){
         writeHTML -filename $outFileHTMLService
     }
@@ -953,7 +952,3 @@ if($exportedToTxt -eq $true){
 #Finish
 Write-Host
 Write-Verbose -Message  "Script Finished!!" -Verbose
-
-
-
-
