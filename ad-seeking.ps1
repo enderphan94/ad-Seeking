@@ -163,6 +163,7 @@ $global:exportedToCSV  = $false
 $global:exportedToTxt = $false
 $global:servicAcc = $false
 $global:adminAcc = $false
+
 function zero{
     $global:ea = 0
     $global:last2015 = 0
@@ -238,7 +239,9 @@ Function tracking
             if ($lastLogon -eq $null) {
                 Write-Host "Date is `$null"
             }
-            $lastLogon.Year#>        
+            $lastLogon.Year#>
+            $global:serviceCount++
+            $global:adminCount++        
             $global:lastLogon= $global:lastLogon.ToString("yyyy/MM/dd")           
             if($global:lastLogon.split("/")[0] -eq 2015){
                 $global:last2015++
@@ -478,306 +481,308 @@ Function tracking
 #outFile --> HTML
 
 function html{
-
-$global:IncludeImages = New-Object System.Collections.ArrayList
-$global:check= 0
-$global:outFilePicPie = $($PSScriptRoot)+"\Pie-$($dateTimeFile)-$($global:check).jpeg"
-#PIE
-    #Email
-$emailPer = $global:ea 
-#$emailPer= [math]::Round($emailPer,2)
-$noEmailPer=  $userCount - $emailPer
-$mailHash = @{"Available"=$emailPer;"Unavailable"=$noEmailPer}
-    #Account expired
-$accExPer = $global:accEx
-#$accExPer = [math]::Round($accExPer,2)
-$accNotExPer = $userCount - $accExPer
-$accExHash = @{"Expired"="$accExPer";"Unexpired"="$accNotExPer"}
-    #Account Status
-$accDisPer = $global:accDisStatus 
-#$accDisPer = [math]::Round($accDisPer,2)
-$accNoDisPer = $userCount - $accDisPer
-$accStatusHash = @{"Disabled"="$accDisPer";"Enabled"="$accNoDisPer"}
-    #Smart Card required
-$smartRePer = $global:smartRe
-#$smartRePer = [math]::Round($smartRePer,2)
-$smartNotRePer = $userCount - $smartRePer
-$smartReHash = @{"Required"="$smartRePer";"Not Required"="$smartNotRePer"}
-    #Password Required
-$passReNotPer = $global:passNotRe 
-#$passReNotPer = [Math]::Round($passReNotPer,2)
-$passRePer =  $userCount - $passReNotPer
-$passReHash = @{"Not Required"="$passReNotPer";"Required"="$passRePer"}
-    #Password Changed
-$passChangeNotAllPer = $global:passChangeNotAll
-#$passChangeNotAllPer = [math]::Round($passChangeNotAllPer,2)
-$passChangeAllper =  $userCount - $passChangeNotAllPer
-$passChangedHash = @{"Allowed"="$passChangeAllper";"Not Allowed"="$passChangeNotAllPer";}
-    #Password Never Expired Set
-$passExpSetPer =$global:passNExpSet
-#$passExpSetPer = [math]::Round($passExpSetPer)
-$passExpNoSetPer= $userCount - $passExpSetPer
-$passExpHash = @{"Set"="$passExpSetPer";"None-set"="$passExpNoSetPer"}
-Function drawPie {
-    param($hash,
-    [string]$title
-    )
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName System.Windows.Forms.DataVisualization
-    $Chart = New-object System.Windows.Forms.DataVisualization.Charting.Chart
-    $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
-    $Series = New-Object -TypeName System.Windows.Forms.DataVisualization.Charting.Series
-    $ChartTypes = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]
-    $Series.ChartType = $ChartTypes::Pie
-    $Chart.Series.Add($Series)
-    $Chart.ChartAreas.Add($ChartArea)
-    $Chart.Series['Series1'].Points.DataBindXY($hash.keys, $hash.values)
-    $Chart.Series[‘Series1’][‘PieLabelStyle’] = ‘Disabled’
-    $Legend = New-Object System.Windows.Forms.DataVisualization.Charting.Legend
-    $Legend.IsEquallySpacedItems = $True
-    $Legend.BorderColor = 'Black'
-    $Chart.Legends.Add($Legend)
-    $chart.Series["Series1"].LegendText = "#VALX (#VALY)"
-    $Chart.Width = 700
-    $Chart.Height = 400
-    $Chart.Left = 10
-    $Chart.Top = 10
-    $Chart.BackColor = [System.Drawing.Color]::White
-    $Chart.BorderColor = 'Black'
-    $Chart.BorderDashStyle = 'Solid'
-    $ChartTitle = New-Object System.Windows.Forms.DataVisualization.Charting.Title
-    $ChartTitle.Text = $title
-    $Font = New-Object System.Drawing.Font @('Microsoft Sans Serif','12', [System.Drawing.FontStyle]::Bold)
-    $ChartTitle.Font =$Font
-    $Chart.Titles.Add($ChartTitle)
-    $testPath = Test-Path $global:outFilePicPie
-    if($testPath -eq $True){
-        $global:check += 1      
-        $global:outFilePicPie = $($PSScriptRoot)+"\Pie-$($dateTimeFile)-$($global:check).jpeg"                 
-    }
-    $global:IncludeImages.Add($global:outFilePicPie)
-    $Chart.SaveImage($outFilePicPie, 'jpeg')  
-}
-#BAR
-    #lastLogon
-$lastLogonHash = [ordered]@{"Never"="$global:NeverLogon";"<2015"="$global:otherLast";"2015"="$global:last2015";"2016"="$global:last2016";"2017"="$global:last2017"}
-$global:check1= 0
-$global:outFilePicBar = $($PSScriptRoot)+"\Bar-$($dateTimeFile)-$($global:check).jpeg"
-    #PassLastSet
-$passSetHash = [ordered]@{"Never"="$global:noLastSet";"<2015"="$global:otherPassSet";"2015"="$global:passSet2015";
-                        "2016"="$global:passSet2016";"2017"="$global:passSet2017";}
-    #BadPassCount
-$badPassCHash = [ordered]@{"N/A"="$global:noBadSet";"0"="$global:basPassC0";"1"="$global:basPassC1";
-                            "2"="$global:basPassC2";"3"="$global:basPassC3" }
-    #Last bad Attempt
-$lastBadLogHash = [ordered]@{"Unknown"="$global:uknownBadLog";"Never"="$global:noBadLogSet";"<2015"="$global:otherBadlog";"2015"="$global:badlog2015";"2016"="$global:badlog2016";"2017"="$global:badlog2017"}
-    #password Age   
-$ageHash = [ordered]@{"N/A"="$global:ageNA";"<2015"="$global:otherAgeDAte";"2015"="$global:ageDate2015";
-                                "2016"="$global:ageDate2016";"2017"="$global:ageDate2017" }
-    #Last Modi
-    
-$lastModihash = [ordered]@{ "N/A"=$global:noneModi++;"<2015"="$global:otherModi";"2015"="$global:modi2015";
-                                "2016"="$global:modi2016";"2017"="$global:modi2017"}
-
-function drawBar{
-    param(
-    $hash,[string]$title
-    ) 
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName System.Windows.Forms.DataVisualization
-    $Chart1 = New-object System.Windows.Forms.DataVisualization.Charting.Chart
-    $ChartArea1 = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
-    $Series1 = New-Object -TypeName System.Windows.Forms.DataVisualization.Charting.Series
-    $ChartTypes1 = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]
-    #$Series1.ChartType = $ChartTypes1::Bar
-    $Chart1.Series.Add($Series1)
-    $Chart1.ChartAreas.Add($ChartArea1)
-    #$Chart1.Series.Add("dataset") | Out-Null
-    $Chart1.Series[‘Series1’].Points.DataBindXY($hash.keys, $hash.values)
-    $chart1.Series[0].ChartType = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]::Column 
-    #$Chart1.Series['Series1'].Points.DataBindXY($hash.keys, $hash.values)
-    $ChartArea1.AxisX.Title = "Years"
-    $ChartArea1.AxisY.Title = "Figures"
-    $Chart1.Series[‘Series1’].IsValueShownAsLabel = $True
-    $Chart1.Series[‘Series1’].SmartLabelStyle.Enabled = $True
-    $chart1.Series[‘Series1’]["LabelStyle"] = "TopLeft"
-    #$chart1.Series[0]["PieLabelStyle"] = "Outside" 
-    ##$chart1.Series[0]["DrawingStyle"] = "Emboss" 
-    #$chart1.Series[0]["PieLineColor"] = "Black" 
-    #$chart1.Series[0]["PieDrawingStyle"] = "Concave"
-
-    if($global:amount){
-        $ChartArea1.AxisY.Maximum = $global:amount
-        if($userCount -ge 1000){
-            $ChartArea1.AxisY.Interval = $inter - ($inter %100)
-            $inter = [math]::Round($userCount/10,0)
-        }elseif($userCount -ge 100){
-            $ChartArea1.AxisY.Interval = $inter - ($inter %10)
-            $inter = [math]::Round($userCount/20,0)
-        }else{
-            $ChartArea1.AxisY.Interval = $inter - ($inter %10)
-            $inter = [math]::Round($userCount/10,0)
+    param($totalCount)
+    $global:IncludeImages = New-Object System.Collections.ArrayList
+    $global:check= 0
+    $global:outFilePicPie = $($PSScriptRoot)+"\Pie-$($dateTimeFile)-$($global:check).jpeg"
+    #PIE
+        #Email
+    $emailPer = $global:ea 
+    #$emailPer= [math]::Round($emailPer,2)
+    $noEmailPer=  $totalCount - $emailPer
+    $mailHash = @{"Available"=$emailPer;"Unavailable"=$noEmailPer}
+        #Account expired
+    $accExPer = $global:accEx
+    #$accExPer = [math]::Round($accExPer,2)
+    $accNotExPer = $totalCount - $accExPer
+    $accExHash = @{"Expired"="$accExPer";"Unexpired"="$accNotExPer"}
+        #Account Status
+    $accDisPer = $global:accDisStatus 
+    #$accDisPer = [math]::Round($accDisPer,2)
+    $accNoDisPer = $totalCount - $accDisPer
+    $accStatusHash = @{"Disabled"="$accDisPer";"Enabled"="$accNoDisPer"}
+        #Smart Card required
+    $smartRePer = $global:smartRe
+    #$smartRePer = [math]::Round($smartRePer,2)
+    $smartNotRePer = $totalCount - $smartRePer
+    $smartReHash = @{"Required"="$smartRePer";"Not Required"="$smartNotRePer"}
+        #Password Required
+    $passReNotPer = $global:passNotRe 
+    #$passReNotPer = [Math]::Round($passReNotPer,2)
+    $passRePer =  $totalCount - $passReNotPer
+    $passReHash = @{"Not Required"="$passReNotPer";"Required"="$passRePer"}
+        #Password Changed
+    $passChangeNotAllPer = $global:passChangeNotAll
+    #$passChangeNotAllPer = [math]::Round($passChangeNotAllPer,2)
+    $passChangeAllper =  $totalCount - $passChangeNotAllPer
+    $passChangedHash = @{"Allowed"="$passChangeAllper";"Not Allowed"="$passChangeNotAllPer";}
+        #Password Never Expired Set
+    $passExpSetPer =$global:passNExpSet
+    #$passExpSetPer = [math]::Round($passExpSetPer)
+    $passExpNoSetPer= $totalCount - $passExpSetPer
+    $passExpHash = @{"Set"="$passExpSetPer";"None-set"="$passExpNoSetPer"}
+    Function drawPie {
+        param($hash,
+        [string]$title
+        )
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Windows.Forms.DataVisualization
+        $Chart = New-object System.Windows.Forms.DataVisualization.Charting.Chart
+        $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
+        $Series = New-Object -TypeName System.Windows.Forms.DataVisualization.Charting.Series
+        $ChartTypes = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]
+        $Series.ChartType = $ChartTypes::Pie
+        $Chart.Series.Add($Series)
+        $Chart.ChartAreas.Add($ChartArea)
+        $Chart.Series['Series1'].Points.DataBindXY($hash.keys, $hash.values)
+        $Chart.Series[‘Series1’][‘PieLabelStyle’] = ‘Disabled’
+        $Legend = New-Object System.Windows.Forms.DataVisualization.Charting.Legend
+        $Legend.IsEquallySpacedItems = $True
+        $Legend.BorderColor = 'Black'
+        $Chart.Legends.Add($Legend)
+        $chart.Series["Series1"].LegendText = "#VALX (#VALY)"
+        $Chart.Width = 700
+        $Chart.Height = 400
+        $Chart.Left = 10
+        $Chart.Top = 10
+        $Chart.BackColor = [System.Drawing.Color]::White
+        $Chart.BorderColor = 'Black'
+        $Chart.BorderDashStyle = 'Solid'
+        $ChartTitle = New-Object System.Windows.Forms.DataVisualization.Charting.Title
+        $ChartTitle.Text = $title
+        $Font = New-Object System.Drawing.Font @('Microsoft Sans Serif','12', [System.Drawing.FontStyle]::Bold)
+        $ChartTitle.Font =$Font
+        $Chart.Titles.Add($ChartTitle)
+        $testPath = Test-Path $global:outFilePicPie
+        if($testPath -eq $True){
+            $global:check += 1      
+            $global:outFilePicPie = $($PSScriptRoot)+"\Pie-$($dateTimeFile)-$($global:check).jpeg"                 
         }
-    }else{
-        $ChartArea1.AxisY.Maximum = $userCount
+        $global:IncludeImages.Add($global:outFilePicPie)
+        $Chart.SaveImage($outFilePicPie, 'jpeg')  
+    }
+    #BAR
+        #lastLogon
+    $lastLogonHash = [ordered]@{"Never"="$global:NeverLogon";"<2015"="$global:otherLast";"2015"="$global:last2015";"2016"="$global:last2016";"2017"="$global:last2017"}
+    $global:check1= 0
+    $global:outFilePicBar = $($PSScriptRoot)+"\Bar-$($dateTimeFile)-$($global:check).jpeg"
+        #PassLastSet
+    $passSetHash = [ordered]@{"Never"="$global:noLastSet";"<2015"="$global:otherPassSet";"2015"="$global:passSet2015";
+                            "2016"="$global:passSet2016";"2017"="$global:passSet2017";}
+        #BadPassCount
+    $badPassCHash = [ordered]@{"N/A"="$global:noBadSet";"0"="$global:basPassC0";"1"="$global:basPassC1";
+                                "2"="$global:basPassC2";"3"="$global:basPassC3" }
+        #Last bad Attempt
+    $lastBadLogHash = [ordered]@{"Unknown"="$global:uknownBadLog";"Never"="$global:noBadLogSet";"<2015"="$global:otherBadlog";"2015"="$global:badlog2015";"2016"="$global:badlog2016";"2017"="$global:badlog2017"}
+        #password Age   
+    $ageHash = [ordered]@{"N/A"="$global:ageNA";"<2015"="$global:otherAgeDAte";"2015"="$global:ageDate2015";
+                                    "2016"="$global:ageDate2016";"2017"="$global:ageDate2017" }
+        #Last Modi
+    
+    $lastModihash = [ordered]@{ "N/A"=$global:noneModi++;"<2015"="$global:otherModi";"2015"="$global:modi2015";
+                                    "2016"="$global:modi2016";"2017"="$global:modi2017"}
+
+    function drawBar{
+        param(
+        $hash,[string]$title
+        ) 
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Windows.Forms.DataVisualization
+        $Chart1 = New-object System.Windows.Forms.DataVisualization.Charting.Chart
+        $ChartArea1 = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
+        $Series1 = New-Object -TypeName System.Windows.Forms.DataVisualization.Charting.Series
+        $ChartTypes1 = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]
+        #$Series1.ChartType = $ChartTypes1::Bar
+        $Chart1.Series.Add($Series1)
+        $Chart1.ChartAreas.Add($ChartArea1)
+        #$Chart1.Series.Add("dataset") | Out-Null
+        $Chart1.Series[‘Series1’].Points.DataBindXY($hash.keys, $hash.values)
+        $chart1.Series[0].ChartType = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]::Column 
+        #$Chart1.Series['Series1'].Points.DataBindXY($hash.keys, $hash.values)
+        $ChartArea1.AxisX.Title = "Years"
+        $ChartArea1.AxisY.Title = "Figures"
+        $Chart1.Series[‘Series1’].IsValueShownAsLabel = $True
+        $Chart1.Series[‘Series1’].SmartLabelStyle.Enabled = $True
+        $chart1.Series[‘Series1’]["LabelStyle"] = "TopLeft"
+        #$chart1.Series[0]["PieLabelStyle"] = "Outside" 
+        ##$chart1.Series[0]["DrawingStyle"] = "Emboss" 
+        #$chart1.Series[0]["PieLineColor"] = "Black" 
+        #$chart1.Series[0]["PieDrawingStyle"] = "Concave"
+
+        if($global:amount){
+            $ChartArea1.AxisY.Maximum = $global:amount
+            if($totalCount -ge 1000){
+                $ChartArea1.AxisY.Interval = $inter - ($inter %100)
+                $inter = [math]::Round($totalCount/10,0)
+            }elseif($totalCount -ge 100){
+                $ChartArea1.AxisY.Interval = $inter - ($inter %10)
+                $inter = [math]::Round($totalCount/20,0)
+            }else{
+                $ChartArea1.AxisY.Interval = $inter - ($inter %10)
+                $inter = [math]::Round($totalCount/10,0)
+            }
+        }else{
+            $ChartArea1.AxisY.Maximum = $totalCount
         
-        if($userCount -ge 1000){
-            $ChartArea1.AxisY.Interval = $inter - ($inter %100)
-            $inter = [math]::Round($userCount/10,0)
-        }elseif($userCount -ge 100){
-            $ChartArea1.AxisY.Interval = $inter - ($inter %10)
-            $inter = [math]::Round($userCount/20,0)
-        }else{
-            $ChartArea1.AxisY.Interval = $inter - ($inter %10)
-            $inter = [math]::Round($userCount/10,0)
+            if($totalCount -ge 1000){
+                $ChartArea1.AxisY.Interval = $inter - ($inter %100)
+                $inter = [math]::Round($totalCount/10,0)
+            }elseif($totalCount -ge 100){
+                $ChartArea1.AxisY.Interval = $inter - ($inter %10)
+                $inter = [math]::Round($totalCount/20,0)
+            }else{
+                $ChartArea1.AxisY.Interval = $inter - ($inter %10)
+                $inter = [math]::Round($totalCount/10,0)
+            }
+
         }
-
-    }
     
-    $Chart1.Width = 1000
-    $Chart1.Height = 700
-    $Chart1.Left = 10
-    $Chart1.Top = 10
-    $Chart1.BackColor = [System.Drawing.Color]::White
-    $Chart1.BorderColor = 'Black'
-    $Chart1.BorderDashStyle = 'Solid'      
-    $ChartTitle1 = New-Object System.Windows.Forms.DataVisualization.Charting.Title
-    $ChartTitle1.Text = $title
-    $Font1 = New-Object System.Drawing.Font @('Microsoft Sans Serif','12', [System.Drawing.FontStyle]::Bold)
-    $ChartTitle1.Font =$Font1
-    $Chart1.Titles.Add($ChartTitle1)
+        $Chart1.Width = 1000
+        $Chart1.Height = 700
+        $Chart1.Left = 10
+        $Chart1.Top = 10
+        $Chart1.BackColor = [System.Drawing.Color]::White
+        $Chart1.BorderColor = 'Black'
+        $Chart1.BorderDashStyle = 'Solid'      
+        $ChartTitle1 = New-Object System.Windows.Forms.DataVisualization.Charting.Title
+        $ChartTitle1.Text = $title
+        $Font1 = New-Object System.Drawing.Font @('Microsoft Sans Serif','12', [System.Drawing.FontStyle]::Bold)
+        $ChartTitle1.Font =$Font1
+        $Chart1.Titles.Add($ChartTitle1)
 
-    $testPath = Test-Path $global:outFilePicBar
-    if($testPath -eq $True){
-        $global:check1 += 1      
-        $global:outFilePicBar = $($PSScriptRoot)+"\Bar-$($dateTimeFile)-$($global:check1).jpeg"         
+        $testPath = Test-Path $global:outFilePicBar
+        if($testPath -eq $True){
+            $global:check1 += 1      
+            $global:outFilePicBar = $($PSScriptRoot)+"\Bar-$($dateTimeFile)-$($global:check1).jpeg"         
+        }
+        $global:IncludeImages.Add($global:outFilePicBar)
+        $Chart1.SaveImage("$outFilePicBar", 'jpeg')
     }
-    $global:IncludeImages.Add($global:outFilePicBar)
-    $Chart1.SaveImage("$outFilePicBar", 'jpeg')
-}
-drawPie -hash $mailHash -title "Emails Availability" |Out-Null
-drawPie -hash $accExHash -title "Expired Accounts"|Out-Null
-drawPie -hash $accStatusHash -title "Account Status"|Out-Null
-drawPie -hash $smartReHash -title "Smart Cards Required"|Out-Null
-drawPie -hash $passReHash -title "Password Required"|Out-Null
-#drawPie -hash $passChangedHash -title "Password CANNOT Change"|Out-Null
-drawPie -hash $passExpHash -title "Password Never Expired Settings"|Out-Null
-drawBar -hash $lastLogonHash -title  "Last Logon Date"|Out-Null
-drawBar -hash $passSetHash -title "Password Last Changed"|Out-Null
-#drawBar -Hash $badPassCHash -title "Bad Password Count"|Out-Null
-drawBar -hash $lastBadLogHash -title "Last Bad Logon Attempts"|Out-Null
-drawBar -hash $ageHash -title "Password Expiration Date"|Out-Null
-drawBar -hash $lastModihash -title "User's Objects Latest Modification"|Out-Null
-$userName = Get-ADUser -filter * -Properties DistinguishedName| ?{$_.sAMAccountName -match $env:UserName }|select Name|Out-String
-$userName = $userName -replace '-', ' ' -replace 'Name', ''
-$userName = $userName.Trim()
-$trustedDo = Get-ADTrust -Filter * -Server $Domain | select Name |Out-String
-$trustedDo = $trustedDo  -replace '-','' -replace 'Name','' 
-$trustedDo =$trustedDo.Trim()
-$adForest =  (get-ADForest -Server $Domain).domains | Out-String
-if([string]::IsNullOrEmpty($global:amount)){
-    $global:amount = $userCount
-}
-$admin = Get-ADGroupMember "Domain ADmins" -Server $Domain| select name,distinguishedName |measure
-$admin = $admin.count
-$domainCName = Get-ADDomainController -Filter * -Server $Domain| select Name|Out-String
-$domainCName = $domainCName -replace '-', ' ' -replace 'Name', ''
-$domainCName = $domainCName.Trim()
-$domainCoper = Get-ADDomainController -Filter * -Server $Domain| select operatingsystem|Out-String
-$domainCoper = $domainCoper -replace '-', ' ' -replace 'Name', '' -replace 'operatingsystem',''
-$domainCoper = $domainCoper.Trim()
-$ipAddress = Get-NetIPAddress | ?{($_.InterfaceAlias -match "Public") -and ($_.AddressFamily -match "Ipv4")}|select IPAddress|Out-String
-$ipAddress = $ipAddress -replace '-', ' ' -replace 'IPAddress', ''
-$ipAddress = $ipAddress.Trim()
-$body =@'
-<h1> Forest Report </h1>
-<p><ins><b>I.<b> Information<ins></p>
-<div class="tabofexecu">
-    <table class="tabexecu" >
+    drawPie -hash $mailHash -title "Emails Availability" |Out-Null
+    drawPie -hash $accExHash -title "Expired Accounts"|Out-Null
+    drawPie -hash $accStatusHash -title "Account Status"|Out-Null
+    drawPie -hash $smartReHash -title "Smart Cards Required"|Out-Null
+    drawPie -hash $passReHash -title "Password Required"|Out-Null
+    #drawPie -hash $passChangedHash -title "Password CANNOT Change"|Out-Null
+    drawPie -hash $passExpHash -title "Password Never Expired Settings"|Out-Null
+    drawBar -hash $lastLogonHash -title  "Last Logon Date"|Out-Null
+    drawBar -hash $passSetHash -title "Password Last Changed"|Out-Null
+    #drawBar -Hash $badPassCHash -title "Bad Password Count"|Out-Null
+    drawBar -hash $lastBadLogHash -title "Last Bad Logon Attempts"|Out-Null
+    drawBar -hash $ageHash -title "Password Expiration Date"|Out-Null
+    drawBar -hash $lastModihash -title "User's Objects Latest Modification"|Out-Null
+    $userName = Get-ADUser -filter * -Properties DistinguishedName| ?{$_.sAMAccountName -match $env:UserName }|select Name|Out-String
+    $userName = $userName -replace '-', ' ' -replace 'Name', ''
+    $userName = $userName.Trim()
+    $trustedDo = Get-ADTrust -Filter * -Server $Domain | select Name |Out-String
+    $trustedDo = $trustedDo  -replace '-','' -replace 'Name','' 
+    $trustedDo =$trustedDo.Trim()
+    $adForest =  (get-ADForest -Server $Domain).domains | Out-String
+    if([string]::IsNullOrEmpty($global:amount)){
+        $global:amount = $totalCount
+    }
+    $admin = Get-ADGroupMember "Domain ADmins" -Server $Domain| select name,distinguishedName |measure
+    $admin = $admin.count
+    $domainCName = Get-ADDomainController -Filter * -Server $Domain| select Name|Out-String
+    $domainCName = $domainCName -replace '-', ' ' -replace 'Name', ''
+    $domainCName = $domainCName.Trim()
+    $domainCoper = Get-ADDomainController -Filter * -Server $Domain| select operatingsystem|Out-String
+    $domainCoper = $domainCoper -replace '-', ' ' -replace 'Name', '' -replace 'operatingsystem',''
+    $domainCoper = $domainCoper.Trim()
+    $ipAddress = Get-NetIPAddress | ?{($_.InterfaceAlias -match "Public") -and ($_.AddressFamily -match "Ipv4")}|select IPAddress|Out-String
+    $ipAddress = $ipAddress -replace '-', ' ' -replace 'IPAddress', ''
+    $ipAddress = $ipAddress.Trim()
+    $body =@'
+    <h1> Forest Report </h1>
+    <p><ins><b>I.<b> Information<ins></p>
+    <div class="tabofexecu">
+        <table class="tabexecu" >
  
-          <tr>
-            <td>Object Category:</td>
-            <td>{8}</td> 
-          </tr>
-          <tr>
-            <td>Object Class: </td>
-            <td>{9}</td> 
-          </tr>
+              <tr>
+                <td>Object Category:</td>
+                <td>{8}</td> 
+              </tr>
+              <tr>
+                <td>Object Class: </td>
+                <td>{9}</td> 
+              </tr>
   
-          <tr>
-            <td>Amount of Data: </td>
-            <td>{10}</td> 
-          </tr>      
-    </table>
-<div>
+              <tr>
+                <td>Amount of Data: </td>
+                <td>{10}</td> 
+              </tr>      
+        </table>
+    <div>
 
-<div class="tablehere">
-    <table class="tabinfo" > 
-          <tr>
-            <td>Domain:</td>
-            <td>{0}</td> 
-          </tr>
-          <tr>
-            <td>User Domain: </td>
-            <td>{1}</td> 
-          </tr>
-          <tr>
-            <td>Computer Name:</td>
-            <td>{2}</td> 
-          </tr>
-          <tr>
-            <td>IP Address:</td>
-            <td>{14}</td> 
-          </tr>
-          <tr>
-            <td>Reported by: </td>
-            <td>{3}</td> 
-          </tr>
-          <tr>
-            <td>Execution Date: </td>
-            <td>{4}</td> 
-          </tr>
-          <tr>
-            <td>Retrieved Data from: </td>
-            <td>{5}</td> 
-          </tr>
-    </table>
-</div>
+    <div class="tablehere">
+        <table class="tabinfo" > 
+              <tr>
+                <td>Domain:</td>
+                <td>{0}</td> 
+              </tr>
+              <tr>
+                <td>User Domain: </td>
+                <td>{1}</td> 
+              </tr>
+              <tr>
+                <td>Computer Name:</td>
+                <td>{2}</td> 
+              </tr>
+              <tr>
+                <td>IP Address:</td>
+                <td>{14}</td> 
+              </tr>
+              <tr>
+                <td>Reported by: </td>
+                <td>{3}</td> 
+              </tr>
+              <tr>
+                <td>Execution Date: </td>
+                <td>{4}</td> 
+              </tr>
+              <tr>
+                <td>Retrieved Data from: </td>
+                <td>{5}</td> 
+              </tr>
+        </table>
+    </div>
 
-<p><ins><b>II.<b> Domain Summary<ins></p>
-<div  class="secTable">
-    <table class="tabforest" > 
-          <tr>
-            <td>Number of Domain Admins:</td>
-            <td>{11}</td> 
-          </tr>
+    <p><ins><b>II.<b> Domain Summary<ins></p>
+    <div  class="secTable">
+        <table class="tabforest" > 
+              <tr>
+                <td>Number of Domain Admins:</td>
+                <td>{11}</td> 
+              </tr>
 
-          <tr>
-            <td>Forest Domains:</td>
-            <td>{6}</td> 
-          </tr>
-          <tr>
-            <td>Trusted Domains: </td>
-            <td>{7}</td> 
-          </tr>
-    </table>
-</div>
-<div class="tabdomaincon">
-    <table class="tabdomain" > 
-        <tr>
-            <th>Domain Controllers</th>
-            <th>Operating System</th> 
-        </tr>
-        <tr>           
-            <td>{12}</td> 
-            <td>{13}</td> 
-        </tr>      
-    </table>
-<div>
+              <tr>
+                <td>Forest Domains:</td>
+                <td>{6}</td> 
+              </tr>
+              <tr>
+                <td>Trusted Domains: </td>
+                <td>{7}</td> 
+              </tr>
+        </table>
+    </div>
+    <div class="tabdomaincon">
+        <table class="tabdomain" > 
+            <tr>
+                <th>Domain Controllers</th>
+                <th>Operating System</th> 
+            </tr>
+            <tr>           
+                <td>{12}</td> 
+                <td>{13}</td> 
+            </tr>      
+        </table>
+    <div>
 
-<p><ins><b>III.<b> Data Illustration<ins></p>
-'@ -f  $Domain ,$env:UserDomain, $env:ComputerName,$userName,$(get-date),$outFileMeg,$adForest,$trustedDo,$objectCategory,$objectClass,$global:amount,$admin,$domainCName,$domainCoper,$ipAddress
+    <p><ins><b>III.<b> Data Illustration<ins></p>
+'@ -f  $Domain ,$env:UserDomain, $env:ComputerName,$userName,$(get-date),$outFileMeg,$adForest,$trustedDo,$objectCategory,$objectClass,$totalCount,$admin,$domainCName,$domainCoper,$ipAddress
 }
+
+#Generate HTML
 function Generate-Html {
     Param(
        
@@ -795,25 +800,13 @@ function Generate-Html {
     }
 }
 
-
-
 # Service accounts
 
-function seracc{
-    $global:servicAcc = $True
-    ini
-    if(($global:sam -match "^[pP]98[5..7]") -and ($global:sam -notmatch "^[pP]981")){ 
-        tracking -fileName $outFileService 
-             
-    }
- 
 
-}
-    
+
 # Admin accounts
-
 function adminacc{
-
+    $global:adminCount=0
     $global:adminAcc = $True
     $DC = $(Get-ADDomain $Domain.Name).distinguishedName    
     $Base = "LDAP://$D/OU=Admin Accounts,OU=Admin Roles,$DC"
@@ -825,19 +818,19 @@ function adminacc{
     $AdminSearch.Filter = "(&(objectCategory=$objectCategory)(objectClass=$objectClass))"
 
     $properies =@("distinguishedName",
-    "sAMAccountName",
-    "mail",
-    "lastLogonTimeStamp",
-    "pwdLastSet",
-    "badpwdcount",
-    "accountExpires",
-    "userAccountControl",
-    "modifyTimeStamp",
-    "lockoutTime"
-    "badPasswordTime",
-    "maxPwdAge ",
-    "Description"
-    )
+                    "sAMAccountName",
+                    "mail",
+                    "lastLogonTimeStamp",
+                    "pwdLastSet",
+                    "badpwdcount",
+                    "accountExpires",
+                    "userAccountControl",
+                    "modifyTimeStamp",
+                    "lockoutTime"
+                    "badPasswordTime",
+                    "maxPwdAge ",
+                    "Description")
+                 
     foreach($pro in $properies)
     {
         $AdminSearch.PropertiesToLoad.add($pro)| out-null
@@ -847,15 +840,15 @@ function adminacc{
     foreach($global:user in $users){
         ini
         tracking -fileName $outFileAdmin 
-
+        
     }
-
+    
 }
 
 #Main run here
 #$cls = cls
-function main_seracc{
-   
+function seracc{
+        $global:serviceCount =0
     ## Finished distinguished Name method
         zero
         Write-Host
@@ -864,7 +857,12 @@ function main_seracc{
         {
             if($count -lt $global:amount)
             {
-                seracc
+                $global:servicAcc = $True
+                ini
+                if(($global:sam -match "^[pP]98[5..7]") -and ($global:sam -notmatch "^[pP]981")){         
+                    tracking -fileName $outFileService 
+        
+                }
                 $TotalUsersProcessed++
                 $count++
                 If ($ProgressBar) 
@@ -876,19 +874,16 @@ function main_seracc{
             }
         }
         
-    
-
 }
 function writeHTML{
 
-    param($filename)
-    html
+    param($filename,$countHere)
+    html -totalCount $countHere
     Generate-Html -filehtml $filename -IncludeImages $global:IncludeImages
-    foreach($image in $global:IncludeImages){
-            rm $image 
+    foreach($image in $global:IncludeImages){      
+         rm $image 
     }
 }
-
 
 
 #optional choices
@@ -909,15 +904,18 @@ function optional{
         Write-Verbose -Message  "Option is not valid" -Verbose
         exit
     }
-    main_seracc
+    seracc
+    $global:serviceCount
     if($global:servicAcc -eq $true){
-        writeHTML -filename $outFileHTMLService
+        writeHTML -filename $outFileHTMLService -countHere $global:serviceCount
     }
     adminacc
+    $global:adminCount
     if($global:adminAcc -eq $True){
 
-        writeHTML -filename $outFileHTMLAdmin
+        writeHTML -filename $outFileHTMLAdmin -countHere $global:adminCount
     }
+    
     
     
 }
