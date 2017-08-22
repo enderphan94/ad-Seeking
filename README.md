@@ -33,4 +33,4 @@ Dev by Ender Loc Phan
 # Usage
  
 - Following the instruction given by the tool
-- Run quickCheck.ps1 to compare the ouput with amout of data
+- Run quickCheck.ps1 to compare the ouput with its amount of data
