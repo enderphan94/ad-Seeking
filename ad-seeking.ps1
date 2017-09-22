@@ -613,19 +613,7 @@ function html{
         #$chart1.Series[0]["PieLineColor"] = "Black" 
         #$chart1.Series[0]["PieDrawingStyle"] = "Concave"
 
-        if($global:amount){
-            $ChartArea1.AxisY.Maximum = $global:amount
-            if($totalCount -ge 1000){
-                $ChartArea1.AxisY.Interval = $inter - ($inter %100)
-                $inter = [math]::Round($totalCount/10,0)
-            }elseif($totalCount -ge 100){
-                $ChartArea1.AxisY.Interval = $inter - ($inter %10)
-                $inter = [math]::Round($totalCount/20,0)
-            }else{
-                $ChartArea1.AxisY.Interval = $inter - ($inter %10)
-                $inter = [math]::Round($totalCount/10,0)
-            }
-        }else{
+       
             $ChartArea1.AxisY.Maximum = $totalCount
         
             if($totalCount -ge 1000){
@@ -639,7 +627,7 @@ function html{
                 $inter = [math]::Round($totalCount/10,0)
             }
 
-        }
+    
     
         $Chart1.Width = 1000
         $Chart1.Height = 700
