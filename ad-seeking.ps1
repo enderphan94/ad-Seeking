@@ -810,13 +810,13 @@ function adminacc{
     $global:adminCount=0
     $global:adminAcc = $True
     $DC = $(Get-ADDomain $Domain.Name).distinguishedName    
-    $Base = "LDAP://$D/OU=Admin Accounts,OU=Admin Roles,$DC"
+    $Base = "LDAP://$Domain/OU=Admin Accounts,OU=Admin Roles,$DC"
 
     $AdminSearch = New-Object System.DirectoryServices.DirectorySearcher
     $AdminSearch.SearchRoot =$Base
     $AdminSearch.SearchScope = "subtree"
     $AdminSearch.PageSize = 100
-    $AdminSearch.Filter = "(&(objectCategory=$objectCategory)(objectClass=$objectClass))"
+    $AdminSearch.Filter = "(&(objectCategory=person)(objectClass=user))"
 
     $properies =@("distinguishedName",
                     "sAMAccountName",
@@ -853,13 +853,13 @@ function useracc{
     $global:countuser=0
     $global:userAcc = $True
     $DC = $(Get-ADDomain $Domain.Name).distinguishedName    
-    $Base = "LDAP://$D/CN=Users,$DC"
+    $Base = "LDAP://$Domain/CN=Users,$DC"
 
     $AdminSearch = New-Object System.DirectoryServices.DirectorySearcher
     $AdminSearch.SearchRoot =$Base
     $AdminSearch.SearchScope = "subtree"
     $AdminSearch.PageSize = 100
-    $AdminSearch.Filter = "(&(objectCategory=$objectCategory)(objectClass=$objectClass))"
+    $AdminSearch.Filter = "(&(objectCategory=person)(objectClass=user))"
 
     $properies =@("distinguishedName",
                     "sAMAccountName",
