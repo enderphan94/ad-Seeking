@@ -6,9 +6,6 @@ function service{
     $Searcher = New-Object System.DirectoryServices.DirectorySearcher 
     $Searcher.PageSize = 200 
     $Searcher.SearchScope = "subtree" 
-
-
-
     $Searcher.Filter = "(&(objectCategory=person)(objectClass=user))"
     # Specify attribute values to retrieve. 
     $Searcher.PropertiesToLoad.Add("distinguishedName") |Out-Null 
@@ -64,9 +61,6 @@ $PDC = $D.PdcRoleOwner
 $Searcher = New-Object System.DirectoryServices.DirectorySearcher 
 $Searcher.PageSize = 200 
 $Searcher.SearchScope = "subtree" 
-
-
-
 $Searcher.Filter = "(&(objectCategory=person)(objectClass=user))"
 # Specify attribute values to retrieve. 
 $Searcher.PropertiesToLoad.Add("distinguishedName") |Out-Null 
@@ -122,9 +116,6 @@ $PDC = $D.PdcRoleOwner
 $Searcher = New-Object System.DirectoryServices.DirectorySearcher 
 $Searcher.PageSize = 200 
 $Searcher.SearchScope = "subtree" 
-
-
-
 $Searcher.Filter = "(&(objectCategory=person)(objectClass=user))"
 # Specify attribute values to retrieve. 
 $Searcher.PropertiesToLoad.Add("distinguishedName") |Out-Null 
@@ -147,19 +138,14 @@ If($Results)
 # Retrieve the values. 
         $DN = $Result.Properties.Item("distinguishedName")[0]  
         $sam = $Result.Properties.Item("sAMAccountName")[0]     
-        $logon = $Result.Properties.Item("lastLogonTimeStamp")[0]
-         
-        
-          $lastLogon = [datetime]::fromfiletime($logon)
-          
+        $logon = $Result.Properties.Item("lastLogonTimeStamp")[0]      
+        $lastLogon = [datetime]::fromfiletime($logon)
         $currentDate = get-date 
         if($lastLogon -lt $currentDate.AddDays(-105)){
         "$sam,$lastLogon"
          $count++
-        }
-               
-    }
-           
+        }              
+    }     
 } 
     Else 
 { 
