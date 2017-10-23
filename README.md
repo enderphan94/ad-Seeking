@@ -1,27 +1,3 @@
-# ad-Seeking
-
-Dev by Ender Loc Phan
-
-# Requirements:
-
-- Powershell > Version 4
-- Import-Module ActiveDirectory
-    
-# DESCRIPTION
-
-    
-    
-# NOTES
-    Version 1.0
-# LINK
-    https://github.com/enderphan94/ad-Seeking/blob/master/ad-seeking.ps1
-    
-# Usage
- 
-- Following the instruction given by the tool
-- Run quickCheck.ps1 to compare the ouput with its amount of data
-
-
 # Wiki
 
 Here: https://github.com/enderphan94/Learn-Power-Shell/wiki
@@ -29,7 +5,6 @@ Here: https://github.com/enderphan94/Learn-Power-Shell/wiki
 # Problems reported
 
 Here: https://github.com/enderphan94/Learn-Power-Shell/wiki#anatomy-ldap-attributes
-
 
 # Forensic: Active Directory Account Types
 
