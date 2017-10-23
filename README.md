@@ -67,7 +67,7 @@ Get Service, Admin, User accounts which never logon and have not logged on in 10
     "maxPwdAge ",
     "Description"
 
-Given out HTML reports with its illustration display in Bar charts and Column graphs.
+Given out HTML reports with its illustration displayed in Bar charts and Column graphs.
 
 ## Authors
 
