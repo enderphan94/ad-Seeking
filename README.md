@@ -73,7 +73,7 @@ Given out HTML reports with its illustration displayed in Bar charts and Column 
 
 * **Ender Loc Phan** - *Initial work* - [GitRespo](https://github.com/enderphan94)
 
-See also the list of [CCI-WebPage](enderphan.2wy.info) projects I have done 
+See also the list of [CCI-WebPage](http://enderphan.2wy.info) projects I have done 
 
 ## License
 
